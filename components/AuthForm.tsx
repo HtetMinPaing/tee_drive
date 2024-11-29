@@ -7,7 +7,6 @@ import { Button } from "@/components/ui/button"
 import {
     Form,
     FormControl,
-    FormDescription,
     FormField,
     FormItem,
     FormLabel,
@@ -142,7 +141,7 @@ const AuthForm = ({ type }: { type: FormType }) => {
                     </div>
                 </form>
             </Form>
-            {true && (
+            {accountId && (
                 <OTPModal email={form.getValues("email")} accountId={accountId} />
             )}
         </>
