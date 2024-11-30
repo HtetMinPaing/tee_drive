@@ -45,6 +45,7 @@ export const createAccount = async ({
     const existingAccount = getUserByEmail(email);
 
     const accountId = await sendEmailOTP({ email });
+    console.log("Account Id" + accountId)
 
     if (!accountId) throw new Error("Failed to send an OTP");
 
@@ -75,6 +76,9 @@ export const verifySecret = async ({ accountId, password }: {
         const { account } = await createAdminClient();
 
         const session = await account.createSession(accountId, password);
+        console.log("AccountId: "+ accountId);
+        console.log("Password: "+ password);
+        console.log(parseStringify({sessionId: session.$id}));
 
         (await cookies()).set("appwrite-session", session.secret, {
             path: "/",
