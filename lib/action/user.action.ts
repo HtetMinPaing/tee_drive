@@ -1,9 +1,8 @@
 'use server';
 
 import { ID, Query } from "node-appwrite";
-import { createAdminClient } from "../appwrite";
+import { createAdminClient, createSessionClient } from "../appwrite";
 import { appwriteConfig } from "../appwrite/config";
-import { string } from "zod";
 import { parseStringify } from "../utils";
 import { cookies } from "next/headers";
 
@@ -76,9 +75,9 @@ export const verifySecret = async ({ accountId, password }: {
         const { account } = await createAdminClient();
 
         const session = await account.createSession(accountId, password);
-        console.log("AccountId: "+ accountId);
-        console.log("Password: "+ password);
-        console.log(parseStringify({sessionId: session.$id}));
+        console.log("AccountId: " + accountId);
+        console.log("Password: " + password);
+        console.log(parseStringify({ sessionId: session.$id }));
 
         (await cookies()).set("appwrite-session", session.secret, {
             path: "/",
@@ -90,5 +89,30 @@ export const verifySecret = async ({ accountId, password }: {
         return parseStringify({ sessionId: session.$id })
     } catch (error) {
         handleError(error, "Failed to verify OTP.")
+    }
+}
+
+export const getCurrentUser = async () => {
+    try {
+        const { databases, account } = await createSessionClient();
+
+        const result = await account.get();
+        console.log("User is authenticated:", result);
+        console.log("ID", result.$id);
+
+        const user = await databases.listDocuments(
+            appwriteConfig.databaseId,
+            appwriteConfig.usersCollectionId,
+            [Query.equal("accountID", [result.$id])],
+        )
+
+        console.log(user)
+        console.log(user.documents[0]);
+        if (user.total <= 0) return null;
+
+        return parseStringify(user.documents[0]);
+    } catch (error) {
+        console.error("Error retrieving user:", error);
+        return null;
     }
 }

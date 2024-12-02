@@ -11,13 +11,14 @@ export const createSessionClient = async () => {
 
     if (!session || !session.value) throw new Error("No session");
 
+    console.log(session.value);
     client.setSession(session.value);
 
     return {
         get account() {
             return new Account(client);
         },
-        get database() {
+        get databases() {
             return new Databases(client);
         }
     }
