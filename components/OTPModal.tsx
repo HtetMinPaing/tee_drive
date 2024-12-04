@@ -84,7 +84,7 @@ const OTPModal = ({ accountId, email }: { accountId: string, email: string }) =>
                             Submit
                             {isLoading && (
                                 <Image
-                                    src="/ssets/icons/loader.svg"
+                                    src="/assets/icons/loader.svg"
                                     alt='loader'
                                     width={24}
                                     height={24}

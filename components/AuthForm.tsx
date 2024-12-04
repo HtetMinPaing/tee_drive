@@ -16,7 +16,7 @@ import { Input } from "@/components/ui/input"
 import { useState } from "react"
 import Image from "next/image"
 import Link from "next/link"
-import { createAccount } from "@/lib/action/user.action"
+import { createAccount, signInUser } from "@/lib/action/user.action"
 import OTPModal from "./OTPModal"
 
 
@@ -49,10 +49,15 @@ const AuthForm = ({ type }: { type: FormType }) => {
         setIsLoading(true);
         setErrorMessage("");
         try {
-            const user = await createAccount({
-                fullName: values.fullName || "",
-                email: values.email,
-            })
+            const user =
+                type === "sign-up" ?
+                    await createAccount({
+                        fullName: values.fullName || "",
+                        email: values.email,
+                    }) :
+                    await signInUser({
+                        email: values.email
+                    });
             setAccountId(user.accountId);
         } catch {
             setErrorMessage("Failed to create account. Please try again");
@@ -104,13 +109,13 @@ const AuthForm = ({ type }: { type: FormType }) => {
                     />
 
                     {/* The submit button */}
-                    <Button 
-                        type="submit" 
+                    <Button
+                        type="submit"
                         disabled={isLoading}
                         className="form-submit-button"
                     >
-                        { type === "sign-in" ? "Sign In" : "Sign Up" }
-                        {isLoading && 
+                        {type === "sign-in" ? "Sign In" : "Sign Up"}
+                        {isLoading &&
                             <Image
                                 src="/assets/icons/loader.svg"
                                 alt="loader"
@@ -131,7 +136,7 @@ const AuthForm = ({ type }: { type: FormType }) => {
                                 ? "Don't have an account?"
                                 : "Already have an account?"}
                         </p>
-                        <Link 
+                        <Link
                             href={type === "sign-in" ? "/sign-up" : "/sign-in"}
                             className="ml-1 font-medium text-brand"
                         >
