@@ -1,3 +1,5 @@
+'use server';
+
 import { Account, Avatars, Client, Databases, Storage } from "node-appwrite"
 import { appwriteConfig } from "./config"
 import { cookies } from "next/headers";
@@ -11,7 +13,7 @@ export const createSessionClient = async () => {
 
     if (!session || !session.value) throw new Error("No session");
 
-    console.log(session.value);
+    // console.log(session.value);
     client.setSession(session.value);
 
     return {
@@ -40,8 +42,8 @@ export const createAdminClient = async () => {
         get storage() {
             return new Storage(client);
         },
-        get avatar() {
-            return new Avatars(client); 
-        }
-    }
-}
+        get avatars() {
+            return new Avatars(client);
+        },
+    };
+};
