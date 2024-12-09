@@ -2,13 +2,17 @@ import React from 'react'
 import { Button } from './ui/button'
 import Image from 'next/image'
 import { signOutUser } from '@/lib/action/user.action'
+import FileUploader from './FileUploader'
 
-const Header = () => {
+const Header = ({ userId, accountId }: {
+  userId: string
+  accountId: string
+}) => {
   return (
     <header className="header">
       Search
       <div className="header-wrapper">
-        FileUploader
+        <FileUploader ownerId={userId} accountId={accountId} />
         <form action={async () => {
           'use server';
           await signOutUser();
