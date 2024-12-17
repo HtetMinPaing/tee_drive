@@ -27,8 +27,10 @@ import { Models } from "node-appwrite";
 import { useState } from "react";
 import { Input } from "./ui/input";
 import { Button } from "./ui/button";
-import { renameFile } from "@/lib/action/file.action";
+import { renameFile, updateFileUsers } from "@/lib/action/file.action";
 import { usePathname } from "next/navigation";
+import { FileDetails, ShareInput } from "./ActionsModalContent";
+import { getCurrentUser } from "@/lib/action/user.action";
 
 const ActionsDropdown = ({ file }: { file: Models.Document }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -37,6 +39,7 @@ const ActionsDropdown = ({ file }: { file: Models.Document }) => {
 
   const [name, setName] = useState(file.name);
   const [isLoading, setIsLoading] = useState(false);
+  const [emails, setEmails] = useState<string[]>([]);
 
   const path = usePathname();
 
@@ -48,19 +51,31 @@ const ActionsDropdown = ({ file }: { file: Models.Document }) => {
   };
 
   const handleAction = async () => {
-    if(!action) return;
+    if (!action) return;
     setIsLoading(true);
     let success = false;
 
     const actions = {
-      rename: () => renameFile({fileId: file.$id, name, extension: file.extension, path}),
-      share: () => console.log("share")
+      rename: () =>
+        renameFile({ fileId: file.$id, name, extension: file.extension, path }),
+      share: () => updateFileUsers({ fileId: file.$id, emails, path }),
     };
 
     success = await actions[action.value as keyof typeof actions]();
 
-    if(success) closeAllModals();
+    if (success) closeAllModals();
     setIsLoading(false);
+  };
+
+  const handleRemoveUsers = async (email: string) => {
+    const updatedEmails = emails.filter((e) => e !== email);
+    const success = await updateFileUsers({
+      fileId: file.$id,
+      emails: updatedEmails,
+      path
+    });
+    if(success) setEmails(updatedEmails);
+    closeAllModals();
   };
 
   const readDialogContent = () => {
@@ -77,6 +92,14 @@ const ActionsDropdown = ({ file }: { file: Models.Document }) => {
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
+            />
+          )}
+          {value === "details" && <FileDetails file={file} />}
+          {value === "share" && (
+            <ShareInput
+              file={file}
+              onInputChange={setEmails}
+              onRemove={handleRemoveUsers}
             />
           )}
         </DialogHeader>
