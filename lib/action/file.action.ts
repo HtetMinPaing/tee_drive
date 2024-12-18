@@ -14,6 +14,16 @@ const handleError = (error: unknown, message: string) => {
   throw error;
 };
 
+const getFileBuffer = async (file) => {
+  if (file.size === 0) {
+    throw new Error("File is empty or corrupted.");
+  }
+
+  const arrayBuffer = await file.arrayBuffer(); // Convert to ArrayBuffer
+  const buffer = new Uint8Array(arrayBuffer); // Create Uint8Array for buffer
+  return buffer;
+};
+
 export const uploadFile = async ({
   file,
   ownerId,
@@ -22,7 +32,8 @@ export const uploadFile = async ({
 }: UploadFileProps) => {
   const { storage, databases } = await createAdminClient();
   try {
-    const inputFile = InputFile.fromBuffer(file, file.name);
+    const buffer = await getFileBuffer(file); // Ensure the buffer is created correctly
+    const inputFile = InputFile.fromBuffer(buffer, file.name);
 
     const bucketFile = await storage.createFile(
       appwriteConfig.bucketId,
@@ -60,7 +71,7 @@ export const uploadFile = async ({
   }
 };
 
-const createQueries = (currentUser: Models.Document) => {
+const createQueries = (currentUser: Models.Document, types: string[]) => {
   const queries = [
     Query.or([
       Query.equal("owner", [currentUser.$id]),
@@ -68,10 +79,11 @@ const createQueries = (currentUser: Models.Document) => {
     ]),
   ];
   // TODO: Search, sort, limits
+  if(types.length > 0) queries.push(Query.equal("type", types))
   return queries;
 };
 
-export const getFiles = async () => {
+export const getFiles = async ({ types = [] }: GetFilesProps) => {
   const { databases } = await createAdminClient();
 
   try {
@@ -79,7 +91,7 @@ export const getFiles = async () => {
 
     if (!currentUser) throw new Error("User not found.");
 
-    const queries = createQueries(currentUser);
+    const queries = createQueries(currentUser, types);
 
     const files = await databases.listDocuments(
       appwriteConfig.databaseId,
@@ -124,7 +136,7 @@ export const updateFileUsers = async ({
   emails,
   path,
 }: UpdateFileUsersProps) => {
-  const {databases} = await createAdminClient();
+  const { databases } = await createAdminClient();
 
   try {
     const updatedFile = await databases.updateDocument(
@@ -133,11 +145,36 @@ export const updateFileUsers = async ({
       fileId,
       {
         users: emails,
-      },
+      }
     );
     revalidatePath(path);
-    return parseStringify(updatedFile)
+    return parseStringify(updatedFile);
   } catch (error) {
     handleError(error, "Failed to share the file");
   }
-}
+};
+
+export const deleteFile = async ({
+  fileId,
+  bucketFileId,
+  path,
+}: DeleteFileProps) => {
+  const { databases, storage } = await createAdminClient();
+
+  try {
+    const deletedFile = await databases.deleteDocument(
+      appwriteConfig.databaseId,
+      appwriteConfig.filesCollectionId,
+      fileId
+    );
+
+    if (deletedFile) {
+      await storage.deleteFile(appwriteConfig.bucketId, bucketFileId);
+    }
+
+    revalidatePath(path);
+    return parseStringify({ status: "success" });
+  } catch (error) {
+    handleError(error, "Filed to delete file");
+  }
+};
