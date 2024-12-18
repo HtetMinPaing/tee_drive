@@ -3,6 +3,7 @@ import { Button } from './ui/button'
 import Image from 'next/image'
 import { signOutUser } from '@/lib/action/user.action'
 import FileUploader from './FileUploader'
+import Search from './Search'
 
 const Header = ({ userId, accountId }: {
   userId: string
@@ -10,7 +11,7 @@ const Header = ({ userId, accountId }: {
 }) => {
   return (
     <header className="header">
-      Search
+      <Search />
       <div className="header-wrapper">
         <FileUploader ownerId={userId} accountId={accountId} />
         <form action={async () => {
